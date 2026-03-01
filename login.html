@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Connexion - Undersand Market</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>💰</text></svg>">
+  <style>/* Même CSS que register.html - copie tout */</style>
+</head>
+<body>
+  <div class="card">
+    <h1>Se connecter</h1>
+    <form id="loginForm">
+      <div class="form-group">
+        <label>Email</label>
+        <input type="email" id="email" required placeholder="ton@email.com">
+        <div id="emailError" class="error"></div>
+      </div>
+      <div class="form-group">
+        <label>Mot de passe</label>
+        <input type="password" id="password" required placeholder="Ton mot de passe">
+        <div id="passwordError" class="error"></div>
+      </div>
+      <button type="submit" class="btn" id="loginBtn">
+        Se connecter <span id="spinner" class="spinner" style="display:none;"></span>
+      </button>
+    </form>
+    <div id="successMsg" style="display:none; text-align:center; color:#10b981; font-weight:600; margin-top:1rem;">
+      ✅ Connecté ! Redirection...
+    </div>
+    <div class="links">
+      Pas de compte ? <a href="/register.html">S'inscrire</a>
+    </div>
+  </div>
+
+  <!-- Firebase + Login Logic -->
+  <script type="module">
+    import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.13.1/firebase-app.js';
+    import { getAuth, signInWithEmailAndPassword } from 'https://www.gstatic.com/firebasejs/10.13.1/firebase-auth.js';
+
+    // TES MÊMES CONFIGS FIREBASE
+    const firebaseConfig = { /* Colle ici tes configs */ };
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+
+    const form = document.getElementById('loginForm');
+    const btn = document.getElementById('loginBtn');
+    const spinner = document.getElementById('spinner');
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const email = document.getElementById('email').value;
+      const password = document.getElementById('password').value;
+
+      btn.disabled = true;
+      spinner.style.display = 'inline-block';
+      
+      try {
+        await signInWithEmailAndPassword(auth, email, password);
+        document.getElementById('successMsg').style.display = 'block';
+        setTimeout(() => window.location.href = '/dashboard.html', 1500);
+      } catch (error) {
+        document.getElementById('emailError').textContent = error.message;
+      } finally {
+        btn.disabled = false;
+        spinner.style.display = 'none';
+      }
+    });
+  </script>
+</body>
+</html>
