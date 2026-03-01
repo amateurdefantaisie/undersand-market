@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <title>Undersand Market</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+  <div class="container">
+
+    <h1>🛒 Undersand Market</h1>
+    <p>Marketplace intelligente avec système de pièces</p>
+
+    <!-- INSCRIPTION -->
+    <div class="card">
+      <h2>Créer un compte</h2>
+      <input type="email" id="registerEmail" placeholder="Email">
+      <input type="password" id="registerPassword" placeholder="Mot de passe">
+      <button onclick="handleRegister()">S'inscrire</button>
+    </div>
+
+    <!-- CONNEXION -->
+    <div class="card">
+      <h2>Connexion</h2>
+      <input type="email" id="loginEmail" placeholder="Email">
+      <input type="password" id="loginPassword" placeholder="Mot de passe">
+      <button onclick="handleLogin()">Se connecter</button>
+    </div>
+
+  </div>
+
+  <!-- Firebase Config -->
+  <script type="module" src="js/firebase-config.js"></script>
+  <script type="module" src="js/auth.js"></script>
+
+</body>
+</html>
