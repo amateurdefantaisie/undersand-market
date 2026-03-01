@@ -2,34 +2,187 @@
 <html lang="fr">
 <head>
   <meta charset="UTF-8">
-  <title>Dashboard - Undersand Market</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <link rel="stylesheet" href="css/style.css">
+  <title>Dashboard - Undersand Market</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>💰</text></svg>">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%); min-height: 100vh; }
+    .header { background: linear-gradient(135deg, #4f46e5, #7c3aed); color: white; padding: 1rem 0; position: sticky; top: 0; z-index: 100; box-shadow: 0 4px 20px rgba(79,70,229,0.3); }
+    .container { max-width: 1200px; margin: 0 auto; padding: 0 20px; }
+    .header-content { display: flex; justify-content: space-between; align-items: center; }
+    .logo { font-size: 1.5rem; font-weight: 900; }
+    .user-info { display: flex; align-items: center; gap: 1rem; }
+    .balance { background: rgba(255,255,255,0.2); padding: 0.5rem 1rem; border-radius: 20px; backdrop-filter: blur(10px); font-weight: 600; }
+    .logout { background: rgba(255,255,255,0.2); border: none; color: white; padding: 0.5rem 1rem; border-radius: 20px; cursor: pointer; backdrop-filter: blur(10px); }
+    .dashboard-grid { display: grid; grid-template-columns: 1fr 300px; gap: 2rem; padding: 2rem 0; }
+    .stats-card { background: white; border-radius: 20px; padding: 2rem; box-shadow: 0 10px 40px rgba(0,0,0,0.1); }
+    .balance-display { text-align: center; }
+    .balance-amount { font-size: 4rem; font-weight: 900; background: linear-gradient(45deg, #10b981, #059669); -webkit-background-clip: text; -webkit-text-fill-color: transparent; margin-bottom: 0.5rem; }
+    .action-btn { display: inline-flex; align-items: center; gap: 0.5rem; padding: 1rem 2rem; background: linear-gradient(45deg, #10b981, #059669); color: white; text-decoration: none; border-radius: 12px; font-weight: 600; transition: all 0.3s; margin: 1rem 0; }
+    .action-btn:hover { transform: translateY(-2px); box-shadow: 0 15px 30px rgba(16,185,129,0.4); }
+    .transactions { margin-top: 2rem; }
+    .transaction { display: flex; justify-content: space-between; align-items: center; padding: 1rem; background: #f8fafc; border-radius: 12px; margin-bottom: 1rem; }
+    .transaction-type { font-weight: 600; }
+    .positive { color: #10b981; }
+    .negative { color: #ef4444; }
+    .recent-card { background: white; border-radius: 20px; padding: 2rem; box-shadow: 0 10px 40px rgba(0,0,0,0.1); height: fit-content; }
+    @media (max-width: 768px) { .dashboard-grid { grid-template-columns: 1fr; } }
+  </style>
 </head>
 <body>
+  <header class="header">
+    <div class="container">
+      <div class="header-content">
+        <div class="logo">💰 Undersand Market</div>
+        <div class="user-info">
+          <div class="balance" id="balanceHeader">0 pièces</div>
+          <button class="logout" onclick="logout()">
+            <i class="fas fa-sign-out-alt"></i> Déconnexion
+          </button>
+        </div>
+      </div>
+    </div>
+  </header>
 
   <div class="container">
+    <div class="dashboard-grid">
+      <!-- Stats principales -->
+      <div class="stats-card">
+        <div class="balance-display">
+          <div class="balance-amount" id="balanceAmount">1,247</div>
+          <div style="font-size: 1.2rem; color: #6b7280; margin-bottom: 2rem;">pièces disponibles</div>
+          <a href="#" class="action-btn" onclick="earnCoins()">
+            <i class="fas fa-plus"></i> Gagner des pièces
+          </a>
+          <a href="#" class="action-btn" style="background: linear-gradient(45deg, #f59e0b, #d97706);">
+            <i class="fas fa-shopping-cart"></i> Aller au Market
+          </a>
+        </div>
 
-    <h1>🎯 Dashboard</h1>
+        <!-- Historique transactions -->
+        <div class="transactions">
+          <h3 style="font-size: 1.5rem; margin-bottom: 1.5rem; color: #1f2937;">Historique récent</h3>
+          <div id="transactionsList">
+            <!-- Transactions chargées dynamiquement -->
+          </div>
+        </div>
+      </div>
 
-    <h2>Vos pièces</h2>
-    <p>Total : <span id="coins">0</span></p>
-    <p>Aujourd’hui : <span id="coinsToday">0</span> / 10</p>
-
-    <div class="card">
-      <h2>Sondage du jour</h2>
-      <p id="question">Cliquez pour charger un sondage</p>
-
-      <div id="options"></div>
-
-      <button onclick="loadSurvey()">Charger un sondage</button>
+      <!-- Sidebar récente -->
+      <div class="recent-card">
+        <h3 style="font-size: 1.3rem; margin-bottom: 1.5rem;">Activité rapide</h3>
+        <div id="quickStats">
+          <div style="display: flex; justify-content: space-between; margin-bottom: 1rem;">
+            <span>Aujourd'hui</span>
+            <span class="positive">+150 pièces</span>
+          </div>
+          <div style="display: flex; justify-content: space-between; margin-bottom: 1rem;">
+            <span>Hier</span>
+            <span class="negative">-75 pièces</span>
+          </div>
+          <div style="display: flex; justify-content: space-between;">
+            <span>Semaine</span>
+            <span class="positive">+892 pièces</span>
+          </div>
+        </div>
+      </div>
     </div>
-
   </div>
 
-  <script type="module" src="js/firebase-config.js"></script>
-  <script type="module" src="js/dashboard.js"></script>
-  <script type="module" src="js/surveys.js"></script>
+  <!-- Firebase + Dashboard Logic -->
+  <script type="module">
+    import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.13.1/firebase-app.js';
+    import { getAuth, onAuthStateChanged, signOut, createUserWithEmailAndPassword } from 'https://www.gstatic.com/firebasejs/10.13.1/firebase-auth.js';
+    import { getFirestore, doc, getDoc, setDoc, onSnapshot } from 'https://www.gstatic.com/firebasejs/10.13.1/firebase-firestore.js';
 
+    // TES CONFIGS FIREBASE (mêmes que register/login)
+    const firebaseConfig = {
+      apiKey: "AIzaSyBdo7NO1PnAa90PhEhuzpllkB1ESGZu3J8",
+      authDomain: "harry-undersand.firebaseapp.com",
+      projectId: "harry-undersand",
+      storageBucket: "harry-undersand.firebasestorage.app",
+      messagingSenderId: "1008823909561",
+      appId: "1:1008823909561:web:9a8b4b46cab592972f6f68",
+      identifiantdemesure: "G-N696WFVZ8G" 
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+
+    let userBalance = 1247;
+    let userId = null;
+
+    // Vérif auth + load data
+    onAuthStateChanged(auth, async (user) => {
+      if (!user) {
+        window.location.href = '/login.html';
+        return;
+      }
+      userId = user.uid;
+      await loadUserData();
+      startRealtimeUpdates();
+    });
+
+    async function loadUserData() {
+      const userRef = doc(db, 'users', userId);
+      const userSnap = await getDoc(userRef);
+      if (userSnap.exists()) {
+        userBalance = userSnap.data().balance || 1247;
+        updateBalanceDisplay();
+      } else {
+        // Créer user si nouveau
+        await setDoc(userRef, { balance: 1000, createdAt: new Date() });
+        userBalance = 1000;
+        updateBalanceDisplay();
+      }
+    }
+
+    function startRealtimeUpdates() {
+      const userRef = doc(db, 'users', userId);
+      onSnapshot(userRef, (doc) => {
+        if (doc.exists()) {
+          userBalance = doc.data().balance;
+          updateBalanceDisplay();
+        }
+      });
+    }
+
+    function updateBalanceDisplay() {
+      document.getElementById('balanceAmount').textContent = userBalance.toLocaleString();
+      document.getElementById('balanceHeader').textContent = `${userBalance.toLocaleString()} pièces`;
+    }
+
+    // Actions
+    window.earnCoins = async () => {
+      userBalance += 100;
+      await setDoc(doc(db, 'users', userId), { balance: userBalance }, { merge: true });
+      addTransaction('Gains quotidiens', '+100');
+    };
+
+    window.logout = async () => {
+      await signOut(auth);
+    };
+
+    function addTransaction(type, amount) {
+      const transactionsList = document.getElementById('transactionsList');
+      const div = document.createElement('div');
+      div.className = `transaction ${amount.startsWith('+') ? 'positive' : 'negative'}`;
+      div.innerHTML = `
+        <span class="transaction-type">${type}</span>
+        <span>${amount} pièces</span>
+      `;
+      transactionsList.insertBefore(div, transactionsList.firstChild);
+    }
+
+    // Mock transactions au load
+    setTimeout(() => {
+      addTransaction('Achat produit', '-50');
+      addTransaction('Vente article', '+250');
+      addTransaction('Bonus referral', '+75');
+    }, 500);
+  </script>
 </body>
 </html>
