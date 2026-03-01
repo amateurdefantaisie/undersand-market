@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <title>Dashboard - Undersand Market</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+  <div class="container">
+
+    <h1>🎯 Dashboard</h1>
+
+    <h2>Vos pièces</h2>
+    <p>Total : <span id="coins">0</span></p>
+    <p>Aujourd’hui : <span id="coinsToday">0</span> / 10</p>
+
+    <div class="card">
+      <h2>Sondage du jour</h2>
+      <p id="question">Cliquez pour charger un sondage</p>
+
+      <div id="options"></div>
+
+      <button onclick="loadSurvey()">Charger un sondage</button>
+    </div>
+
+  </div>
+
+  <script type="module" src="js/firebase-config.js"></script>
+  <script type="module" src="js/dashboard.js"></script>
+  <script type="module" src="js/surveys.js"></script>
+
+</body>
+</html>
