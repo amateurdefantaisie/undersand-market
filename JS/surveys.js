@@ -1,8 +1,17 @@
 import { auth, db } from "./firebase-config.js";
-import { collection, getDocs, doc, getDoc, addDoc, updateDoc } 
-from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+import { 
+  collection, 
+  getDocs, 
+  doc, 
+  getDoc, 
+  updateDoc, 
+  addDoc, 
+  increment 
+} from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
-window.loadRandomSurvey = async function() {
+let currentSurvey = null;
+
+window.loadSurvey = async function() {
   const user = auth.currentUser;
   if (!user) return;
 
@@ -15,18 +24,27 @@ window.loadRandomSurvey = async function() {
     return;
   }
 
-  const surveysSnapshot = await getDocs(collection(db, "surveys"));
-  const surveys = surveysSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-  const activeSurveys = surveys.filter(s => s.active);
+  const snapshot = await getDocs(collection(db, "surveys"));
+  const surveys = snapshot.docs
+    .map(doc => ({ id: doc.id, ...doc.data() }))
+    .filter(s => s.active);
 
-  const randomSurvey = activeSurveys[Math.floor(Math.random() * activeSurveys.length)];
+  currentSurvey = surveys[Math.floor(Math.random() * surveys.length)];
 
-  document.getElementById("question").innerText = randomSurvey.question;
+  document.getElementById("question").innerText = currentSurvey.question;
 
-  window.currentSurvey = randomSurvey;
+  const optionsDiv = document.getElementById("options");
+  optionsDiv.innerHTML = "";
+
+  currentSurvey.options.forEach(option => {
+    const btn = document.createElement("button");
+    btn.innerText = option;
+    btn.onclick = () => answerSurvey();
+    optionsDiv.appendChild(btn);
+  });
 };
 
-window.answerSurvey = async function() {
+async function answerSurvey() {
   const user = auth.currentUser;
   const userRef = doc(db, "users", user.uid);
 
@@ -41,7 +59,6 @@ window.answerSurvey = async function() {
     coinsToday: increment(1)
   });
 
-  alert("+1 pièce !");
-};
-
-import { increment } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+  alert("+1 pièce gagnée !");
+  location.reload();
+}
