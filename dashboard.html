@@ -29,6 +29,51 @@
     .negative { color: #ef4444; }
     .recent-card { background: white; border-radius: 20px; padding: 2rem; box-shadow: 0 10px 40px rgba(0,0,0,0.1); height: fit-content; }
     @media (max-width: 768px) { .dashboard-grid { grid-template-columns: 1fr; } }
+    .stat-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+.stat-box {
+  background: linear-gradient(135deg, #ffffff, #f9fafb);
+  padding: 1.5rem;
+  border-radius: 16px;
+  text-align: center;
+  box-shadow: 0 8px 25px rgba(0,0,0,0.08);
+}
+
+.stat-box h4 {
+  font-size: 0.9rem;
+  color: #6b7280;
+  margin-bottom: 0.5rem;
+}
+
+.stat-box p {
+  font-size: 1.8rem;
+  font-weight: 800;
+}
+
+.toast {
+  position: fixed;
+  top: 30px;
+  right: 30px;
+  background: #10b981;
+  color: white;
+  padding: 1rem 1.5rem;
+  border-radius: 12px;
+  box-shadow: 0 15px 30px rgba(0,0,0,0.2);
+  opacity: 0;
+  transform: translateY(-20px);
+  transition: all 0.3s ease;
+  z-index: 9999;
+}
+
+.toast.show {
+  opacity: 1;
+  transform: translateY(0);
+}
   </style>
 </head>
 <body>
@@ -38,6 +83,7 @@
         <div class="logo">💰 Undersand Market</div>
         <div class="user-info">
           <div class="balance" id="balanceHeader">0 pièces</div>
+          <div id="userEmail" style="font-size:0.9rem; opacity:0.8;"></div>
           <button class="logout" onclick="logout()">
             <i class="fas fa-sign-out-alt"></i> Déconnexion
           </button>
@@ -51,6 +97,20 @@
       <!-- Stats principales -->
       <div class="stats-card">
         <div class="balance-display">
+          <div class="stat-grid">
+          <div class="stat-box">
+            <h4>Total Gains</h4>
+            <p id="totalGains">0</p>
+          </div>
+          <div class="stat-box">
+            <h4>Total Dépenses</h4>
+            <p id="totalSpent">0</p>
+          </div>
+          <div class="stat-box">
+            <h4>Articles vendus</h4>
+            <p id="itemsSold">0</p>
+          </div>
+          </div>
           <div class="balance-amount" id="balanceAmount">1,247</div>
           <div style="font-size: 1.2rem; color: #6b7280; margin-bottom: 2rem;">pièces disponibles</div>
           <a href="#" class="action-btn" onclick="earnCoins()">
@@ -59,7 +119,10 @@
           <a href="#" class="action-btn" style="background: linear-gradient(45deg, #f59e0b, #d97706);">
             <i class="fas fa-shopping-cart"></i> Aller au Market
           </a>
-        </div>
+          <a href="/post.html" class="action-btn" style="background: linear-gradient(45deg, #6366f1, #4f46e5);">
+            <i class="fas fa-upload"></i> Poster un article
+          </a>
+          </div>
 
         <!-- Historique transactions -->
         <div class="transactions">
@@ -95,7 +158,7 @@
   <script type="module">
     import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.13.1/firebase-app.js';
     import { getAuth, onAuthStateChanged, signOut, createUserWithEmailAndPassword } from 'https://www.gstatic.com/firebasejs/10.13.1/firebase-auth.js';
-    import { getFirestore, doc, getDoc, setDoc, onSnapshot } from 'https://www.gstatic.com/firebasejs/10.13.1/firebase-firestore.js';
+    import { getFirestore, doc, getDoc, setDoc, onSnapshot, collection, addDoc, query, orderBy, limit, getDocs } from 'https://www.gstatic.com/firebasejs/10.13.1/firebase-firestore.js';
 
     // TES CONFIGS FIREBASE (mêmes que register/login)
     const firebaseConfig = {
@@ -112,20 +175,20 @@
     const auth = getAuth(app);
     const db = getFirestore(app);
 
-    let userBalance = 1247;
     let userId = null;
 
     // Vérif auth + load data
     onAuthStateChanged(auth, async (user) => {
       if (!user) {
         window.location.href = '/login.html';
+        document.getElementById("userEmail").textContent = user.email;
         return;
       }
       userId = user.uid;
       await loadUserData();
       startRealtimeUpdates();
     });
-
+    
     async function loadUserData() {
       const userRef = doc(db, 'users', userId);
       const userSnap = await getDoc(userRef);
@@ -139,6 +202,25 @@
         updateBalanceDisplay();
       }
     }
+
+    async function loadTransactions() {
+  const q = query(
+    collection(db, "users", userId, "transactions"),
+    orderBy("date", "desc"),
+    limit(10)
+  );
+
+  const querySnapshot = await getDocs(q);
+  const list = document.getElementById("transactionsList");
+  list.innerHTML = "";
+
+  querySnapshot.forEach(doc => {
+    const data = doc.data();
+    addTransaction(data.type, data.amount);
+  });
+}
+
+await calculateStats();
 
     function startRealtimeUpdates() {
       const userRef = doc(db, 'users', userId);
@@ -155,12 +237,27 @@
       document.getElementById('balanceHeader').textContent = `${userBalance.toLocaleString()} pièces`;
     }
 
-    // Actions
-    window.earnCoins = async () => {
-      userBalance += 100;
-      await setDoc(doc(db, 'users', userId), { balance: userBalance }, { merge: true });
-      addTransaction('Gains quotidiens', '+100');
-    };
+let earning = false;
+
+window.earnCoins = async () => {
+  if (earning) return;
+  earning = true;
+
+  userBalance += 100;
+
+  await setDoc(doc(db, 'users', userId), {
+    balance: userBalance
+  }, { merge: true });
+
+  await addDoc(collection(db, "users", userId, "transactions"), {
+    type: "Gain quotidien",
+    amount: "+100",
+    date: new Date()
+  });
+
+  showToast("✅ +100 pièces ajoutées !");
+  earning = false;
+};
 
     window.logout = async () => {
       await signOut(auth);
@@ -177,12 +274,38 @@
       transactionsList.insertBefore(div, transactionsList.firstChild);
     }
 
-    // Mock transactions au load
-    setTimeout(() => {
-      addTransaction('Achat produit', '-50');
-      addTransaction('Vente article', '+250');
-      addTransaction('Bonus referral', '+75');
-    }, 500);
-  </script>
+    async function calculateStats() {
+  const q = query(collection(db, "users", userId, "transactions"));
+  const snapshot = await getDocs(q);
+
+  let gains = 0;
+  let spent = 0;
+
+  snapshot.forEach(doc => {
+    const amount = doc.data().amount;
+    if (amount.startsWith("+")) {
+      gains += parseInt(amount.replace("+", ""));
+    } else {
+      spent += parseInt(amount.replace("-", ""));
+    }
+  });
+
+  document.getElementById("totalGains").textContent = gains;
+  document.getElementById("totalSpent").textContent = spent;
+}
+
+    function showToast(message) {
+  const toast = document.createElement("div");
+  toast.className = "toast";
+  toast.textContent = message;
+  document.body.appendChild(toast);
+
+  setTimeout(() => toast.classList.add("show"), 100);
+  setTimeout(() => {
+    toast.classList.remove("show");
+    setTimeout(() => toast.remove(), 300);
+  }, 3000);
+}
+</script>
 </body>
 </html>
