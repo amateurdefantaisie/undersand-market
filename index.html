@@ -64,5 +64,29 @@
       </div>
     </section>
   </div>
+
+  <script>
+window.addEventListener("message", async (event) => {
+
+  if (event.origin !== "https://harry-undersand.vercel.app") {
+    return;
+  }
+
+  if (event.data.type === "firebase-login") {
+
+    const token = event.data.token;
+
+    try {
+      await firebase.auth().signInWithCustomToken(token);
+      console.log("Connexion automatique réussie 🚀");
+    } catch (error) {
+      console.error("Erreur connexion auto :", error);
+    }
+
+  }
+
+});
+</script>
+  
 </body>
 </html>
